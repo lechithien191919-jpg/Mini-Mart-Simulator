@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mini Mart Simulator</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: Arial, sans-serif; user-select: none; }
+        #ui {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+            text-shadow: 2px 2px 3px #000;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid #ffeb3b;
+        }
+        #money { color: #00e676; font-size: 18px; }
+        
+        #store-sign {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 152, 0, 0.9);
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        #message {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffeb3b;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #ffeb3b;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            z-index: 15;
+            pointer-events: none;
+        }
+        
+        .control-btn {
+            position: absolute;
+            bottom: 50px;
+            width: 75px;
+            height: 75px;
+            background: rgba(255, 235, 59, 0.25);
+            border: 2px solid rgba(255, 235, 59, 0.8);
+            border-radius: 50%;
+            color: #ffeb3b;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            touch-action: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+        #action-btn { right: 25px; background: rgba(0, 230, 118, 0.35); border-color: #00e676; color: #00e676; font-size: 12px; text-align: center;}
+        
+        #joystick-base {
+            position: absolute;
+            bottom: 35px;
+            left: 35px;
+            width: 130px;
+            height: 130px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            z-index: 10;
+            touch-action: none;
+        }
+        #joystick-knob {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        #hint {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.8);
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 1px 1px 2px #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        💰 Tiền: <span id="money">150</span>$<br>
+        📦 Thùng hàng trong tay: <span id="carried-goods">0</span>/3<br>
+        🛒 Hàng trên kệ trống: <span id="empty-shelves">3</span>/3
+    </div>
+    
+    <div id="store-sign">🏪 MINI MART SIMULATOR</div>
+
+    <div id="crosshair"></div>
+    <div id="message">Chào mừng ông chủ đến với cửa hàng!</div>
+    <div id="hint">Vuốt màn hình để nhìn quanh & xoay hướng | Dùng joystick để di chuyển</div>
+
+    <div id="action-btn" class="control-btn">TƯƠNG TÁC</div>
+    <div id="joystick-base">
+        <div id="joystick-knob"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); // Màu bầu trời xanh ngắt
+
+        // Tạo mây trắng bồng bềnh ngoài trời
+        const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+        for (let i = 0; i < 8; i++) {
+            const cloud = new THREE.Mesh(new THREE.BoxGeometry(6, 1.5, 3), cloudMat);
+            cloud.position.set((Math.random() - 0.5) * 40, 15 + Math.random() * 5, -20 + (Math.random() - 0.5) * 40);
+            scene.add(cloud);
+        }
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+        scene.add(ambientLight);
+
+        // Sàn cửa hàng gạch men sáng bóng
+        const floorGeo = new THREE.PlaneGeometry(24, 24);
+        const floorMat = new THREE.MeshBasicMaterial({ color: 0xdddddd });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // Tường cửa hàng màu vàng cam đặc trưng phong cách Mini Mart
+        const wallMat = new THREE.MeshBasicMaterial({ color: 0xffb74d });
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(24, 8, 0.5), wallMat);
+        backWall.position.set(0, 4, -12);
+        scene.add(backWall);
+
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 24), wallMat);
+        leftWall.position.set(-12, 4, 0);
+        scene.add(leftWall);
+
+        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 24), wallMat);
+        rightWall.position.set(12, 4, 0);
+        scene.add(rightWall);
+
+        // 1. Khởi đầu có 3 chiếc kệ trống (Shelves)
+        const shelves = [];
+        const shelfGeo = new THREE.BoxGeometry(3.5, 2.5, 1);
+        const shelfWoodMat = new THREE.MeshBasicMaterial({ color: 0x795548 });
+        
+        const shelfPositions = [
+            { x: -5, z: -6 },
+            { x: 0, z: -6 },
+            { x: 5, z: -6 }
+        ];
+
+        shelfPositions.forEach((pos, index) => {
+            const shelf = new THREE.Mesh(shelfGeo, shelfWoodMat);
+            shelf.position.set(pos.x, 1.25, pos.z);
+            scene.add(shelf);
+            shelves.push({ id: index + 1, mesh: shelf, hasGoods: false, x: pos.x, z: pos.z });
+        });
+
+        // 2. Máy tính để nhập hàng (Computer Desk)
+        const deskGeo = new THREE.BoxGeometry(2.5, 1.2, 1.5);
+        const deskMat = new THREE.MeshBasicMaterial({ color: 0x37474f });
+        const computerDesk = new THREE.Mesh(deskGeo, deskMat);
+        computerDesk.position.set(-9, 0.6, -9);
+        scene.add(computerDesk);
+
+        // Màn hình máy tính
+        const pcScreen = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+        pcScreen.position.set(-9, 1.5, -9);
+        scene.add(pcScreen);
+
+        // 3. Quầy thu ngân (Cashier Counter)
+        const counterGeo = new THREE.BoxGeometry(4, 1.2, 2);
+        const counterMat = new THREE.MeshBasicMaterial({ color: 0x0288d1 });
+        const counter = new THREE.Mesh(counterGeo, counterMat);
+        counter.position.set(6, 0.6, 4);
+        scene.add(counter);
+
+        // 4. Khách hàng đang đứng chờ tại quầy
+        const customerGeo = new THREE.CylinderGeometry(0.4, 0.4, 2, 8);
+        const customerMat = new THREE.MeshBasicMaterial({ color: 0xe91e63 });
+        const customer = new THREE.Mesh(customerGeo, customerMat);
+        customer.position.set(6, 1, 7);
+        scene.add(customer);
+
+        let money = 150;
+        let carriedGoods = 0;
+        let customerWaiting = true; // Khách đang chờ thanh toán mở đầu
+
+        camera.position.set(0, 0, 8);
+        let yaw = 0;
+        let pitch = 0;
+
+        function showMsg(txt) {
+            const m = document.getElementById('message');
+            m.innerText = txt;
+            m.style.opacity = '1';
+            setTimeout(() => { m.style.opacity = '0'; }, 1800);
+        }
+
+        // Cơ chế vuốt màn hình xoay góc nhìn y chang Backrooms
+        let isDragging = false;
+        let prevX = 0, prevY = 0;
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#action-btn') || e.target.closest('#joystick-base') || e.target.closest('#ui') || e.target.closest('#store-sign')) return;
+            isDragging = true;
+            prevX = e.touches[0].clientX;
+            prevY = e.touches[0].clientY;
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            for (let i = 0; i < e.touches.length; i++) {
+                const currentX = e.touches[i].clientX;
+                const currentY = e.touches[i].clientY;
+                yaw -= (currentX - prevX) * 0.004;
+                pitch -= (currentY - prevY) * 0.004;
+                
+                const maxPitch = Math.PI / 2.2;
+                if (pitch > maxPitch) pitch = maxPitch;
+                if (pitch < -maxPitch) pitch = -maxPitch;
+
+                prevX = currentX;
+                prevY = currentY;
+                break;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        // Joystick di chuyển mượt mà
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
+        let moveVector = { x: 0, z: 0 };
+        let joystickTouchId = null;
+
+        joystickBase.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            joystickTouchId = e.changedTouches[0].identifier;
+        });
+
+        joystickBase.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === joystickTouchId) {
+                    const rect = joystickBase.getBoundingClientRect();
+                    let dx = touch.clientX - (rect.left + rect.width / 2);
+                    let dy = touch.clientY - (rect.top + rect.height / 2);
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const maxR = 45;
+                    if (dist > maxR) { dx = (dx/dist)*maxR; dy = (dy/dist)*maxR; }
+                    joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                    moveVector.x = dx / maxR;
+                    moveVector.z = dy / maxR;
+                }
+            }
+        });
+
+        const resetJoystick = () => {
+            joystickTouchId = null;
+            joystickKnob.style.transform = `translate(0px, 0px)`;
+            moveVector = { x: 0, z: 0 };
+        };
+        joystickBase.addEventListener('touchend', resetJoystick);
+        joystickBase.addEventListener('touchcancel', resetJoystick);
+
+        // Nút Tương Tác trung tâm
+        const actionBtn = document.getElementById('action-btn');
+        actionBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const px = camera.position.x;
+            const pz = camera.position.z;
+
+            // 1. Tương tác với Máy tính mua hàng (-9, -9)
+            if (Math.abs(px - (-9)) < 2.5 && Math.abs(pz - (-9)) < 2.5) {
+                if (money >= 20) {
+                    if (carriedGoods < 3) {
+                        money -= 20;
+                        carriedGoods++;
+                        document.getElementById('money').innerText = money;
+                        document.getElementById('carried-goods').innerText = carriedGoods;
+                        showMsg("Đã nhập 1 thùng hàng từ máy tính! (-20$)");
+                    } else {
+                        showMsg("Tay bạn đã đầy thùng hàng (Tối đa 3)!");
+                    }
+                } else {
+                    showMsg("Không đủ tiền để nhập hàng! Cần 20$");
+                }
+                return;
+            }
+
+            // 2. Tương tác với Quầy thu ngân tính tiền cho khách (6, 4)
+            if (Math.abs(px - 6) < 3 && Math.abs(pz - 4) < 3) {
+                if (customerWaiting) {
+                    customerWaiting = false;
+                    money += 50;
+                    document.getElementById('money').innerText = money;
+                    customer.position.set(100, -100, 100); // Khách đi mất sau khi trả tiền
+                    showMsg("Đã tính tiền cho khách thành công! +50$ 💰");
+                    
+                    // Khách mới ghé sau 6 giây
+                    setTimeout(() => {
+                        customer.position.set(6, 1, 7);
+                        customerWaiting = true;
+                        showMsg("🚨 Có khách hàng mới đang chờ thanh toán tại quầy!");
+                    }, 6000);
+                } else {
+                    showMsg("Hiện tại chưa có khách chờ ở quầy.");
+                }
+                return;
+            }
+
+            // 3. Tương tác với Kệ hàng trống để trưng bày hàng
+            let interactedShelf = false;
+            let emptyCount = 0;
+            shelves.forEach(shelf => {
+                if (!shelf.hasGoods) emptyCount++;
+                if (Math.abs(px - shelf.x) < 2.2 && Math.abs(pz - shelf.z) < 2.2) {
+                    interactedShelf = true;
+                    if (!shelf.hasGoods) {
+                        if (carriedGoods > 0) {
+                            carriedGoods--;
+                            shelf.hasGoods = true;
+                            shelf.mesh.material = new THREE.MeshBasicMaterial({ color: 0x4caf50 }); // Đổi màu kệ thành xanh khi có hàng
+                            document.getElementById('carried-goods').innerText = carriedGoods;
+                            
+                            const currentEmpty = shelves.filter(s => !s.hasGoods).length;
+                            document.getElementById('empty-shelves').innerText = currentEmpty;
+                            showMsg("Đã bầy hàng lên kệ thành công! 🛒");
+                        } else {
+                            showMsg("Bạn đang cầm 0 thùng hàng! Hãy ra máy tính nhập hàng.");
+                        }
+                    } else {
+                        showMsg("Kệ này đã đầy hàng rồi!");
+                    }
+                }
+            });
+
+            if (!interactedShelf && Math.abs(px - (-9)) >= 2.5 && Math.abs(pz - (-9)) >= 2.5 && Math.abs(px - 6) >= 3) {
+                showMsg("Hãy di chuyển lại gần Máy tính, Quầy thu ngân hoặc Kệ hàng!");
+            }
+        });
+
+        // Vòng lặp chuyển động
+        const speed = 0.08;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+
+            if (moveVector.x !== 0 || moveVector.z !== 0) {
+                const moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.z);
+                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+                camera.position.x += moveDir.x * speed;
+                camera.position.z += moveDir.z * speed;
+
+                // Giới hạn trong khuôn viên cửa hàng
+                camera.position.x = Math.max(-11, Math.min(11, camera.position.x));
+                camera.position.z = Math.max(-11, Math.min(11, camera.position.z));
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
+
