@@ -11,39 +11,39 @@
             top: 15px;
             left: 15px;
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             text-shadow: 2px 2px 3px #000;
             z-index: 10;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.65);
             padding: 10px 15px;
             border-radius: 10px;
             border: 2px solid #ffeb3b;
         }
-        #money { color: #00e676; font-size: 18px; }
+        #money { color: #00e676; font-size: 17px; }
         
         #store-sign {
             position: absolute;
             top: 15px;
             right: 15px;
-            background: rgba(255, 152, 0, 0.9);
+            background: rgba(255, 152, 0, 0.95);
             border: 2px solid #fff;
             color: #fff;
             padding: 8px 14px;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             z-index: 20;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
         #message {
             position: absolute;
-            top: 25%;
+            top: 22%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: #ffeb3b;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             text-shadow: 2px 2px 4px #000;
             z-index: 20;
@@ -51,10 +51,11 @@
             transition: opacity 0.4s;
             pointer-events: none;
             text-align: center;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             padding: 10px 20px;
             border-radius: 8px;
             border: 1px solid #ffeb3b;
+            max-width: 80%;
         }
 
         #crosshair {
@@ -80,7 +81,7 @@
             border: 2px solid rgba(255, 235, 59, 0.8);
             border-radius: 50%;
             color: #ffeb3b;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -89,7 +90,7 @@
             touch-action: none;
             box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         }
-        #action-btn { right: 25px; background: rgba(0, 230, 118, 0.35); border-color: #00e676; color: #00e676; font-size: 12px; text-align: center;}
+        #action-btn { right: 25px; background: rgba(0, 230, 118, 0.35); border-color: #00e676; color: #00e676; font-size: 11px; text-align: center;}
         
         #joystick-base {
             position: absolute;
@@ -120,26 +121,28 @@
             bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
             font-size: 11px;
             pointer-events: none;
             z-index: 10;
             text-shadow: 1px 1px 2px #000;
+            width: 100%;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div id="ui">
         💰 Tiền: <span id="money">150</span>$<br>
-        📦 Thùng hàng trong tay: <span id="carried-goods">0</span>/3<br>
-        🛒 Hàng trên kệ trống: <span id="empty-shelves">3</span>/3
+        📦 Thùng hàng cầm tay: <span id="carried-goods">0</span>/3<br>
+        🛒 Kệ trống cần bầy: <span id="empty-shelves">3</span>/3
     </div>
     
     <div id="store-sign">🏪 MINI MART SIMULATOR</div>
 
     <div id="crosshair"></div>
-    <div id="message">Chào mừng ông chủ đến với cửa hàng!</div>
-    <div id="hint">Vuốt màn hình để nhìn quanh & xoay hướng | Dùng joystick để di chuyển</div>
+    <div id="message">Chào mừng ông chủ bắt đầu quản lý siêu thị!</div>
+    <div id="hint">Vuốt màn hình để nhìn quanh | Dùng joystick bên trái để đi chuyển</div>
 
     <div id="action-btn" class="control-btn">TƯƠNG TÁC</div>
     <div id="joystick-base">
@@ -149,13 +152,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Màu bầu trời xanh ngắt
+        scene.background = new THREE.Color(0x87CEEB); // Bầu trời xanh ngoài trời
 
-        // Tạo mây trắng bồng bềnh ngoài trời
+        // Mây trắng bồng bềnh
         const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
-        for (let i = 0; i < 8; i++) {
-            const cloud = new THREE.Mesh(new THREE.BoxGeometry(6, 1.5, 3), cloudMat);
-            cloud.position.set((Math.random() - 0.5) * 40, 15 + Math.random() * 5, -20 + (Math.random() - 0.5) * 40);
+        for (let i = 0; i < 6; i++) {
+            const cloud = new THREE.Mesh(new THREE.BoxGeometry(5, 1.2, 2.5), cloudMat);
+            cloud.position.set((Math.random() - 0.5) * 30, 14 + Math.random() * 4, -15 + (Math.random() - 0.5) * 30);
             scene.add(cloud);
         }
 
@@ -164,79 +167,104 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+        // Ánh sáng tổng thể bên trong siêu thị
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
         scene.add(ambientLight);
 
-        // Sàn cửa hàng gạch men sáng bóng
-        const floorGeo = new THREE.PlaneGeometry(24, 24);
-        const floorMat = new THREE.MeshBasicMaterial({ color: 0xdddddd });
+        const pointLight = new THREE.PointLight(0xffffee, 1.2, 30);
+        pointLight.position.set(0, 4.5, 0);
+        scene.add(pointLight);
+
+        // --- KIẾN TRÚC CỬA HÀNG ---
+        // 1. Sàn gạch men caro sáng bóng
+        const floorGeo = new THREE.PlaneGeometry(20, 20);
+        const floorMat = new THREE.MeshBasicMaterial({ color: 0xecf0f1 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         scene.add(floor);
 
-        // Tường cửa hàng màu vàng cam đặc trưng phong cách Mini Mart
-        const wallMat = new THREE.MeshBasicMaterial({ color: 0xffb74d });
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(24, 8, 0.5), wallMat);
-        backWall.position.set(0, 4, -12);
+        // 2. Trần nhà trắng tinh
+        const ceilingGeo = new THREE.PlaneGeometry(20, 20);
+        const ceilingMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.set(0, 5, 0);
+        scene.add(ceiling);
+
+        // Các bóng đèn Neon trên trần nhà
+        const lightBoxMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
+        [-4, 0, 4].forEach(xPos => {
+            const ceilingLamp = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 1.5), lightBoxMat);
+            ceilingLamp.position.set(xPos, 4.9, 0);
+            scene.add(ceilingLamp);
+        });
+
+        // 3. Tường siêu thị màu vàng kem ấm áp
+        const wallMat = new THREE.MeshBasicMaterial({ color: 0xffecb3 });
+        
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 0.5), wallMat);
+        backWall.position.set(0, 2.5, -10);
         scene.add(backWall);
 
-        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 24), wallMat);
-        leftWall.position.set(-12, 4, 0);
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 20), wallMat);
+        leftWall.position.set(-10, 2.5, 0);
         scene.add(leftWall);
 
-        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 24), wallMat);
-        rightWall.position.set(12, 4, 0);
+        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 20), wallMat);
+        rightWall.position.set(10, 2.5, 0);
         scene.add(rightWall);
 
-        // 1. Khởi đầu có 3 chiếc kệ trống (Shelves)
+        // --- NỘI THẤT TRONG SIÊU THỊ ---
+        // 1. Ba chiếc kệ trống khởi đầu (Shelves)
         const shelves = [];
-        const shelfGeo = new THREE.BoxGeometry(3.5, 2.5, 1);
-        const shelfWoodMat = new THREE.MeshBasicMaterial({ color: 0x795548 });
+        const shelfGeo = new THREE.BoxGeometry(3.2, 2.2, 0.9);
+        const shelfWoodMat = new THREE.MeshBasicMaterial({ color: 0x8d6e63 }); // Gỗ nâu sáng
         
         const shelfPositions = [
-            { x: -5, z: -6 },
-            { x: 0, z: -6 },
-            { x: 5, z: -6 }
+            { x: -4, z: -5 },
+            { x: 0, z: -5 },
+            { x: 4, z: -5 }
         ];
 
         shelfPositions.forEach((pos, index) => {
             const shelf = new THREE.Mesh(shelfGeo, shelfWoodMat);
-            shelf.position.set(pos.x, 1.25, pos.z);
+            shelf.position.set(pos.x, 1.1, pos.z);
             scene.add(shelf);
             shelves.push({ id: index + 1, mesh: shelf, hasGoods: false, x: pos.x, z: pos.z });
         });
 
-        // 2. Máy tính để nhập hàng (Computer Desk)
-        const deskGeo = new THREE.BoxGeometry(2.5, 1.2, 1.5);
+        // 2. Máy tính để nhập hàng (Góc trái)
+        const deskGeo = new THREE.BoxGeometry(2.2, 1.0, 1.2);
         const deskMat = new THREE.MeshBasicMaterial({ color: 0x37474f });
         const computerDesk = new THREE.Mesh(deskGeo, deskMat);
-        computerDesk.position.set(-9, 0.6, -9);
+        computerDesk.position.set(-7.5, 0.5, -7.5);
         scene.add(computerDesk);
 
         // Màn hình máy tính
-        const pcScreen = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
-        pcScreen.position.set(-9, 1.5, -9);
+        const pcScreen = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.08), new THREE.MeshBasicMaterial({ color: 0x00e5ff }));
+        pcScreen.position.set(-7.5, 1.3, -7.5);
         scene.add(pcScreen);
 
-        // 3. Quầy thu ngân (Cashier Counter)
-        const counterGeo = new THREE.BoxGeometry(4, 1.2, 2);
-        const counterMat = new THREE.MeshBasicMaterial({ color: 0x0288d1 });
+        // 3. Quầy thu ngân (Góc phải phía trước)
+        const counterGeo = new THREE.BoxGeometry(3.5, 1.0, 1.8);
+        const counterMat = new THREE.MeshBasicMaterial({ color: 0x0288d1 }); // Xanh dương đẹp mắt
         const counter = new THREE.Mesh(counterGeo, counterMat);
-        counter.position.set(6, 0.6, 4);
+        counter.position.set(5, 0.5, 3);
         scene.add(counter);
 
-        // 4. Khách hàng đang đứng chờ tại quầy
-        const customerGeo = new THREE.CylinderGeometry(0.4, 0.4, 2, 8);
-        const customerMat = new THREE.MeshBasicMaterial({ color: 0xe91e63 });
+        // 4. Khách hàng đang đứng chờ thanh toán
+        const customerGeo = new THREE.CylinderGeometry(0.35, 0.35, 1.8, 8);
+        const customerMat = new THREE.MeshBasicMaterial({ color: 0xe91e63 }); // Áo hồng nổi bật
         const customer = new THREE.Mesh(customerGeo, customerMat);
-        customer.position.set(6, 1, 7);
+        customer.position.set(5, 0.9, 5.5);
         scene.add(customer);
 
         let money = 150;
         let carriedGoods = 0;
-        let customerWaiting = true; // Khách đang chờ thanh toán mở đầu
+        let customerWaiting = true;
 
-        camera.position.set(0, 0, 8);
+        // ĐẶT CAMERA ĐỨNG HẲN BÊN TRONG CỬA HÀNG, NHÌN VỀ PHÍA TRƯỚC
+        camera.position.set(0, 1.6, 2); 
         let yaw = 0;
         let pitch = 0;
 
@@ -244,10 +272,10 @@
             const m = document.getElementById('message');
             m.innerText = txt;
             m.style.opacity = '1';
-            setTimeout(() => { m.style.opacity = '0'; }, 1800);
+            setTimeout(() => { m.style.opacity = '0'; }, 2000);
         }
 
-        // Cơ chế vuốt màn hình xoay góc nhìn y chang Backrooms
+        // Vuốt màn hình xoay góc nhìn
         let isDragging = false;
         let prevX = 0, prevY = 0;
         window.addEventListener('touchstart', (e) => {
@@ -277,7 +305,7 @@
 
         window.addEventListener('touchend', () => { isDragging = false; });
 
-        // Joystick di chuyển mượt mà
+        // Joystick di chuyển
         const joystickBase = document.getElementById('joystick-base');
         const joystickKnob = document.getElementById('joystick-knob');
         let moveVector = { x: 0, z: 0 };
@@ -314,84 +342,81 @@
         joystickBase.addEventListener('touchend', resetJoystick);
         joystickBase.addEventListener('touchcancel', resetJoystick);
 
-        // Nút Tương Tác trung tâm
+        // Nút Tương Tác
         const actionBtn = document.getElementById('action-btn');
         actionBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const px = camera.position.x;
             const pz = camera.position.z;
 
-            // 1. Tương tác với Máy tính mua hàng (-9, -9)
-            if (Math.abs(px - (-9)) < 2.5 && Math.abs(pz - (-9)) < 2.5) {
+            // 1. Tương tác Máy tính nhập hàng (-7.5, -7.5)
+            if (Math.abs(px - (-7.5)) < 2.5 && Math.abs(pz - (-7.5)) < 2.5) {
                 if (money >= 20) {
                     if (carriedGoods < 3) {
                         money -= 20;
                         carriedGoods++;
                         document.getElementById('money').innerText = money;
                         document.getElementById('carried-goods').innerText = carriedGoods;
-                        showMsg("Đã nhập 1 thùng hàng từ máy tính! (-20$)");
+                        showMsg("📦 Đã nhập 1 thùng hàng từ máy tính! (-20$)");
                     } else {
-                        showMsg("Tay bạn đã đầy thùng hàng (Tối đa 3)!");
+                        showMsg("⚠️ Tay bạn đã đầy thùng hàng (Tối đa 3)!");
                     }
                 } else {
-                    showMsg("Không đủ tiền để nhập hàng! Cần 20$");
+                    showMsg("❌ Không đủ tiền nhập hàng! Cần ít nhất 20$");
                 }
                 return;
             }
 
-            // 2. Tương tác với Quầy thu ngân tính tiền cho khách (6, 4)
-            if (Math.abs(px - 6) < 3 && Math.abs(pz - 4) < 3) {
+            // 2. Tương tác Quầy thu ngân thanh toán (5, 3)
+            if (Math.abs(px - 5) < 3 && Math.abs(pz - 3) < 3) {
                 if (customerWaiting) {
                     customerWaiting = false;
                     money += 50;
                     document.getElementById('money').innerText = money;
-                    customer.position.set(100, -100, 100); // Khách đi mất sau khi trả tiền
-                    showMsg("Đã tính tiền cho khách thành công! +50$ 💰");
+                    customer.position.set(100, -100, 100); // Khách đi khỏi
+                    showMsg("💵 Đã tính tiền cho khách thành công! +50$");
                     
-                    // Khách mới ghé sau 6 giây
                     setTimeout(() => {
-                        customer.position.set(6, 1, 7);
+                        customer.position.set(5, 0.9, 5.5);
                         customerWaiting = true;
-                        showMsg("🚨 Có khách hàng mới đang chờ thanh toán tại quầy!");
+                        showMsg("🚨 Có khách hàng mới đang chờ thanh toán!");
                     }, 6000);
                 } else {
-                    showMsg("Hiện tại chưa có khách chờ ở quầy.");
+                    showMsg("ℹ️ Hiện chưa có khách chờ ở quầy.");
                 }
                 return;
             }
 
-            // 3. Tương tác với Kệ hàng trống để trưng bày hàng
+            // 3. Tương tác Kệ hàng trống
             let interactedShelf = false;
-            let emptyCount = 0;
             shelves.forEach(shelf => {
-                if (!shelf.hasGoods) emptyCount++;
                 if (Math.abs(px - shelf.x) < 2.2 && Math.abs(pz - shelf.z) < 2.2) {
                     interactedShelf = true;
                     if (!shelf.hasGoods) {
                         if (carriedGoods > 0) {
                             carriedGoods--;
                             shelf.hasGoods = true;
-                            shelf.mesh.material = new THREE.MeshBasicMaterial({ color: 0x4caf50 }); // Đổi màu kệ thành xanh khi có hàng
+                            shelf.mesh.material = new THREE.MeshBasicMaterial({ color: 0x4caf50 }); // Đổi kệ thành xanh lá khi trưng bày xong
                             document.getElementById('carried-goods').innerText = carriedGoods;
                             
                             const currentEmpty = shelves.filter(s => !s.hasGoods).length;
                             document.getElementById('empty-shelves').innerText = currentEmpty;
-                            showMsg("Đã bầy hàng lên kệ thành công! 🛒");
+                            showMsg("🛒 Đã bầy hàng lên kệ thành công!");
                         } else {
-                            showMsg("Bạn đang cầm 0 thùng hàng! Hãy ra máy tính nhập hàng.");
+                            showMsg("⚠️ Bạn đang cầm 0 thùng hàng! Hãy ra máy tính nhập hàng.");
                         }
                     } else {
-                        showMsg("Kệ này đã đầy hàng rồi!");
+                        showMsg("✅ Kệ hàng này đã được bầy đầy rồi!");
                     }
                 }
             });
 
-            if (!interactedShelf && Math.abs(px - (-9)) >= 2.5 && Math.abs(pz - (-9)) >= 2.5 && Math.abs(px - 6) >= 3) {
-                showMsg("Hãy di chuyển lại gần Máy tính, Quầy thu ngân hoặc Kệ hàng!");
+            if (!interactedShelf && Math.abs(px - (-7.5)) >= 2.5 && Math.abs(pz - (-7.5)) >= 2.5 && Math.abs(px - 5) >= 3) {
+                showMsg("🚶 Hãy đến gần Máy tính, Quầy thu ngân hoặc Kệ hàng để tương tác!");
             }
         });
 
-        // Vòng lặp chuyển động
+        // Vòng lặp game
         const speed = 0.08;
         function animate() {
             requestAnimationFrame(animate);
@@ -408,8 +433,8 @@
                 camera.position.z += moveDir.z * speed;
 
                 // Giới hạn trong khuôn viên cửa hàng
-                camera.position.x = Math.max(-11, Math.min(11, camera.position.x));
-                camera.position.z = Math.max(-11, Math.min(11, camera.position.z));
+                camera.position.x = Math.max(-9, Math.min(9, camera.position.x));
+                camera.position.z = Math.max(-9, Math.min(9, camera.position.z));
             }
 
             renderer.render(scene, camera);
@@ -424,4 +449,3 @@
     </script>
 </body>
 </html>
-
