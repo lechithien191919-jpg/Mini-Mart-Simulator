@@ -225,7 +225,6 @@
         rightWall.position.set(11, 2.5, 0);
         scene.add(rightWall);
 
-        // Tường trước có cửa kính ở giữa
         const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 0.5), wallMat);
         frontWallLeft.position.set(-6.5, 2.5, 11);
         scene.add(frontWallLeft);
@@ -238,10 +237,7 @@
         frontWallTop.position.set(0, 4, 11);
         scene.add(frontWallTop);
 
-        // Khung cửa kính siêu thị sang trọng
-        const doorFrameMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
         const doorGlassMat = new THREE.MeshBasicMaterial({ color: 0x81d4fa, transparent: true, opacity: 0.5 });
-        
         const glassDoor = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3, 0.1), doorGlassMat);
         glassDoor.position.set(0, 1.5, 11);
         scene.add(glassDoor);
@@ -280,17 +276,15 @@
             shelves.push({ id: index + 1, group: shelfGroup, hasGoods: false, x: pos.x, z: pos.z });
         });
 
-        // --- BÀN MÁY TÍNH CHÂN THẬT (GÓC TRÁI) ---
+        // --- BÀN MÁY TÍNH CHÂN THẬT ---
         const desk = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.0, 1.3), new THREE.MeshBasicMaterial({ color: 0x37474f }));
         desk.position.set(-8, 0.5, -8);
         scene.add(desk);
 
-        // Thùng Case máy tính dưới bàn
         const pcCase = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.7, 0.7), new THREE.MeshBasicMaterial({ color: 0x212121 }));
         pcCase.position.set(-8.8, 0.35, -8);
         scene.add(pcCase);
 
-        // Màn hình PC đẹp có viền
         const pcScreen = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.08), new THREE.MeshBasicMaterial({ color: 0x111111 }));
         pcScreen.position.set(-8, 1.35, -8);
         scene.add(pcScreen);
@@ -299,7 +293,6 @@
         pcDisplay.position.set(-8, 1.35, -7.95);
         scene.add(pcDisplay);
 
-        // Bàn phím & Chuột
         const keyboard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.25), new THREE.MeshBasicMaterial({ color: 0x212121 }));
         keyboard.position.set(-8, 1.03, -7.6);
         scene.add(keyboard);
@@ -317,36 +310,31 @@
         cashRegister.position.set(4.5, 1.25, 2);
         scene.add(cashRegister);
 
-        // --- KHÁCH HÀNG 3D HOÀN CHỈNH & ĐI TỪ CỬA VÀO ---
+        // --- KHÁCH HÀNG 3D ---
         const customerGroup = new THREE.Group();
-        
-        // Thân khách
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.1, 8), new THREE.MeshBasicMaterial({ color: 0xe91e63 }));
         body.position.set(0, 0.55, 0);
         customerGroup.add(body);
         
-        // Đầu khách
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffccbc }));
         head.position.set(0, 1.3, 0);
         customerGroup.add(head);
 
-        // Tóc khách cho đẹp
         const hair = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: 0x3e2723 }));
         hair.position.set(0, 1.42, -0.05);
         customerGroup.add(hair);
 
-        // Đặt khách ở ngoài cửa lúc đầu
-        customerGroup.position.set(0, 0, 10.5);
+        customerGroup.position.set(5, 0, 12);
         scene.add(customerGroup);
 
         let money = 150;
         let carriedGoods = 0;
-        let customerState = 'walking_in'; // walking_in, waiting, leaving
+        let customerState = 'walking_in';
         let customerTargetZ = 4.5;
 
-        // Vị trí xuất phát nhân vật ở trung tâm
-        camera.position.set(0, 1.6, 0);
-        let yaw = 0;
+        // ĐẶT VỊ TRÍ XUẤT PHÁT AN TOÀN TRONG NHÀ (X: 0, Z: -3) VÀ KHÓA GÓC NHÌN QUAY VÀO TRONG
+        camera.position.set(0, 1.6, -3);
+        let yaw = 0; // Nhìn thẳng vào trong nhà
         let pitch = 0;
 
         function showMsg(txt) {
@@ -443,7 +431,6 @@
             const px = camera.position.x;
             const pz = camera.position.z;
 
-            // 1. Máy tính nhập hàng
             if (Math.abs(px - (-8)) < 2.5 && Math.abs(pz - (-8)) < 2.5) {
                 if (money >= 20) {
                     if (carriedGoods < 3) {
@@ -461,7 +448,6 @@
                 return;
             }
 
-            // 2. Quầy thu ngân thanh toán
             if (Math.abs(px - 5) < 3 && Math.abs(pz - 2) < 3) {
                 if (customerState === 'waiting') {
                     customerState = 'leaving';
@@ -476,7 +462,6 @@
                 return;
             }
 
-            // 3. Kệ hàng
             let interactedShelf = false;
             shelves.forEach(shelf => {
                 if (Math.abs(px - shelf.x) < 2.2 && Math.abs(pz - shelf.z) < 2.2) {
@@ -499,4 +484,19 @@
                             showMsg("⚠️ Bạn đang cầm 0 thùng hàng! Hãy ra máy tính nhập hàng.");
                         }
                     } else {
+                        showMsg("✅ Kệ hàng này đã được bầy đầy rồi!");
+                    }
+                }
+            });
+
+            if (!interactedShelf && Math.abs(px - (-8)) >= 2.5 && Math.abs(pz - (-8)) >= 2.5 && Math.abs(px - 5) >= 3) {
+                showMsg("🚶 Hãy đến gần Máy tính, Quầy thu ngân hoặc Kệ hàng để tương tác!");
+            }
+        });
+
+        const speed = 0.08;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            camera.rotation.order = 'YXZ';
             
