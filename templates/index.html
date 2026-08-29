@@ -154,115 +154,88 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
 
-        // Mây trời
-        const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
-        for (let i = 0; i < 6; i++) {
-            const cloud = new THREE.Mesh(new THREE.BoxGeometry(5, 1.2, 2.5), cloudMat);
-            cloud.position.set((Math.random() - 0.5) * 30, 14 + Math.random() * 4, -15 + (Math.random() - 0.5) * 30);
-            scene.add(cloud);
-        }
-
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // Ánh sáng
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
         scene.add(ambientLight);
 
-        // Sàn và Trần
+        // Sàn nhà
         const floorGeo = new THREE.PlaneGeometry(22, 22);
         const floorMat = new THREE.MeshBasicMaterial({ color: 0xecf0f1 });
         const floor = new THREE.Mesh(floorGeo, floorMat);
         floor.rotation.x = -Math.PI / 2;
         scene.add(floor);
 
-        const ceilingGeo = new THREE.PlaneGeometry(22, 22);
-        const ceilingMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
-        ceiling.rotation.x = Math.PI / 2;
-        ceiling.position.set(0, 5, 0);
-        scene.add(ceiling);
-
-        // Đèn trần
-        const lightBoxMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
-        [-5, 0, 5].forEach(xPos => {
-            const lamp = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 1.5), lightBoxMat);
-            lamp.position.set(xPos, 4.9, 0);
-            scene.add(lamp);
-        });
-
-        // --- DANH SÁCH KHU VỰC VA CHẠM (COLLISION BOXES) ---
-        const obstacles = [
-            { x: 0, z: -10.75, width: 22, depth: 0.5 }, // Tường sau
-            { x: -10.75, z: 0, width: 0.5, depth: 22 }, // Tường trái
-            { x: 10.75, z: 0, width: 0.5, depth: 22 },  // Tường phải
-            
-            // 3 Kệ hàng
-            { x: -5, z: -7, width: 3.4, depth: 1.2 },
-            { x: 0, z: -7, width: 3.4, depth: 1.2 },
-            { x: 5, z: -7, width: 3.4, depth: 1.2 },
-
-            // Bàn máy tính nhập hàng
-            { x: -8, z: -8, width: 2.7, depth: 1.5 },
-
-            // Quầy thu ngân
-            { x: 5, z: 2, width: 4.0, depth: 2.0 }
-        ];
-
-        // Tường trực quan & Cửa ra vào phía trước (Z = 11)
+        // Tường xung quanh siêu thị
         const wallMat = new THREE.MeshBasicMaterial({ color: 0xffecb3 });
+        
+        // Tường sau
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(22, 5, 0.5), wallMat);
         backWall.position.set(0, 2.5, -11);
         scene.add(backWall);
 
+        // Tường trái
         const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 22), wallMat);
         leftWall.position.set(-11, 2.5, 0);
         scene.add(leftWall);
 
+        // Tường phải
         const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 22), wallMat);
         rightWall.position.set(11, 2.5, 0);
         scene.add(rightWall);
 
-        const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 0.5), wallMat);
-        frontWallLeft.position.set(-6.5, 2.5, 11);
-        scene.add(frontWallLeft);
+        // Tường trước (có cửa kính)
+        const frontLeft = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 0.5), wallMat);
+        frontLeft.position.set(-6.5, 2.5, 11);
+        scene.add(frontLeft);
 
-        const frontWallRight = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 0.5), wallMat);
-        frontWallRight.position.set(6.5, 2.5, 11);
-        scene.add(frontWallRight);
+        const frontRight = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 0.5), wallMat);
+        frontRight.position.set(6.5, 2.5, 11);
+        scene.add(frontRight);
 
-        const frontWallTop = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.5), wallMat);
-        frontWallTop.position.set(0, 4, 11);
-        scene.add(frontWallTop);
+        const frontTop = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.5), wallMat);
+        frontTop.position.set(0, 4, 11);
+        scene.add(frontTop);
 
-        const doorGlassMat = new THREE.MeshBasicMaterial({ color: 0x81d4fa, transparent: true, opacity: 0.5 });
-        const glassDoor = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3, 0.1), doorGlassMat);
-        glassDoor.position.set(0, 1.5, 11);
-        scene.add(glassDoor);
+        // Cửa kính
+        const doorGlass = new THREE.Mesh(
+            new THREE.BoxGeometry(3.8, 3, 0.1), 
+            new THREE.MeshBasicMaterial({ color: 0x81d4fa, transparent: true, opacity: 0.5 })
+        );
+        doorGlass.position.set(0, 1.5, 11);
+        scene.add(doorGlass);
 
-        // --- KỆ HÀNG CHÂN THẬT (NHIỀU TẦNG) ---
-        const shelves = [];
-        const shelfPositions = [
-            { x: -5, z: -7 },
-            { x: 0, z: -7 },
-            { x: 5, z: -7 }
+        // Danh sách va chạm
+        const obstacles = [
+            { x: 0, z: -10.75, width: 22, depth: 0.5 },
+            { x: -10.75, z: 0, width: 0.5, depth: 22 },
+            { x: 10.75, z: 0, width: 0.5, depth: 22 },
+            { x: -5, z: -7, width: 3.4, depth: 1.2 },
+            { x: 0, z: -7, width: 3.4, depth: 1.2 },
+            { x: 5, z: -7, width: 3.4, depth: 1.2 },
+            { x: -8, z: -8, width: 2.7, depth: 1.5 },
+            { x: 5, z: 2, width: 4.0, depth: 2.0 }
         ];
 
+        // 3 Kệ hàng
+        const shelves = [];
         const shelfMat = new THREE.MeshBasicMaterial({ color: 0x795548 });
         const shelfBoardMat = new THREE.MeshBasicMaterial({ color: 0xa1887f });
 
-        shelfPositions.forEach((pos, index) => {
+        [-5, 0, 5].forEach((xPos, index) => {
             const shelfGroup = new THREE.Group();
             
-            const sideLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, 1), shelfMat);
-            sideLeft.position.set(-1.6, 1.25, 0);
-            shelfGroup.add(sideLeft);
+            const side1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, 1), shelfMat);
+            side1.position.set(-1.6, 1.25, 0);
+            shelfGroup.add(side1);
 
-            const sideRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, 1), shelfMat);
-            sideRight.position.set(1.6, 1.25, 0);
-            shelfGroup.add(sideRight);
+            const side2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, 1), shelfMat);
+            side2.position.set(1.6, 1.25, 0);
+            shelfGroup.add(side2);
 
             [0.3, 1.1, 1.9].forEach(yPos => {
                 const board = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.12, 0.95), shelfBoardMat);
@@ -270,13 +243,12 @@
                 shelfGroup.add(board);
             });
 
-            shelfGroup.position.set(pos.x, 0, pos.z);
+            shelfGroup.position.set(xPos, 0, -7);
             scene.add(shelfGroup);
-
-            shelves.push({ id: index + 1, group: shelfGroup, hasGoods: false, x: pos.x, z: pos.z });
+            shelves.push({ id: index + 1, group: shelfGroup, hasGoods: false, x: xPos, z: -7 });
         });
 
-        // --- BÀN MÁY TÍNH CHÂN THẬT ---
+        // Bàn máy tính
         const desk = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.0, 1.3), new THREE.MeshBasicMaterial({ color: 0x37474f }));
         desk.position.set(-8, 0.5, -8);
         scene.add(desk);
@@ -293,24 +265,12 @@
         pcDisplay.position.set(-8, 1.35, -7.95);
         scene.add(pcDisplay);
 
-        const keyboard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.25), new THREE.MeshBasicMaterial({ color: 0x212121 }));
-        keyboard.position.set(-8, 1.03, -7.6);
-        scene.add(keyboard);
-
-        const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.15), new THREE.MeshBasicMaterial({ color: 0x424242 }));
-        mouse.position.set(-7.3, 1.03, -7.6);
-        scene.add(mouse);
-
-        // --- QUẦY THU NGÂN ---
+        // Quầy thu ngân
         const counter = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.0, 1.8), new THREE.MeshBasicMaterial({ color: 0x0288d1 }));
         counter.position.set(5, 0.5, 2);
         scene.add(counter);
 
-        const cashRegister = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.6), new THREE.MeshBasicMaterial({ color: 0x424242 }));
-        cashRegister.position.set(4.5, 1.25, 2);
-        scene.add(cashRegister);
-
-        // --- KHÁCH HÀNG 3D ---
+        // Khách hàng
         const customerGroup = new THREE.Group();
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.1, 8), new THREE.MeshBasicMaterial({ color: 0xe91e63 }));
         body.position.set(0, 0.55, 0);
@@ -320,10 +280,6 @@
         head.position.set(0, 1.3, 0);
         customerGroup.add(head);
 
-        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: 0x3e2723 }));
-        hair.position.set(0, 1.42, -0.05);
-        customerGroup.add(hair);
-
         customerGroup.position.set(5, 0, 12);
         scene.add(customerGroup);
 
@@ -332,9 +288,9 @@
         let customerState = 'walking_in';
         let customerTargetZ = 4.5;
 
-        // ĐẶT VỊ TRÍ XUẤT PHÁT AN TOÀN TRONG NHÀ (X: 0, Z: -3) VÀ KHÓA GÓC NHÌN QUAY VÀO TRONG
-        camera.position.set(0, 1.6, -3);
-        let yaw = 0; // Nhìn thẳng vào trong nhà
+        // Đặt vị trí camera an toàn trong nhà
+        camera.position.set(0, 1.6, -2);
+        let yaw = 0;
         let pitch = 0;
 
         function showMsg(txt) {
@@ -348,12 +304,8 @@
         function checkCollision(newX, newZ) {
             for (let i = 0; i < obstacles.length; i++) {
                 const obs = obstacles[i];
-                const minX = obs.x - obs.width / 2 - playerRadius;
-                const maxX = obs.x + obs.width / 2 + playerRadius;
-                const minZ = obs.z - obs.depth / 2 - playerRadius;
-                const maxZ = obs.z + obs.depth / 2 + playerRadius;
-
-                if (newX >= minX && newX <= maxX && newZ >= minZ && newZ <= maxZ) {
+                if (newX >= obs.x - obs.width/2 - playerRadius && newX <= obs.x + obs.width/2 + playerRadius &&
+                    newZ >= obs.z - obs.depth/2 - playerRadius && newZ <= obs.z + obs.depth/2 + playerRadius) {
                     return true;
                 }
             }
@@ -363,7 +315,7 @@
         let isDragging = false;
         let prevX = 0, prevY = 0;
         window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#action-btn') || e.target.closest('#joystick-base') || e.target.closest('#ui') || e.target.closest('#store-sign')) return;
+            if (e.target.closest('#action-btn') || e.target.closest('#joystick-base') || e.target.closest('#ui')) return;
             isDragging = true;
             prevX = e.touches[0].clientX;
             prevY = e.touches[0].clientY;
@@ -371,20 +323,14 @@
 
         window.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
-            for (let i = 0; i < e.touches.length; i++) {
-                const currentX = e.touches[i].clientX;
-                const currentY = e.touches[i].clientY;
-                yaw -= (currentX - prevX) * 0.004;
-                pitch -= (currentY - prevY) * 0.004;
-                
-                const maxPitch = Math.PI / 2.2;
-                if (pitch > maxPitch) pitch = maxPitch;
-                if (pitch < -maxPitch) pitch = -maxPitch;
-
-                prevX = currentX;
-                prevY = currentY;
-                break;
-            }
+            let dx = e.touches[0].clientX - prevX;
+            let dy = e.touches[0].clientY - prevY;
+            yaw -= dx * 0.004;
+            pitch -= dy * 0.004;
+            if (pitch > 1.4) pitch = 1.4;
+            if (pitch < -1.4) pitch = -1.4;
+            prevX = e.touches[0].clientX;
+            prevY = e.touches[0].clientY;
         }, { passive: true });
 
         window.addEventListener('touchend', () => { isDragging = false; });
@@ -425,73 +371,49 @@
         joystickBase.addEventListener('touchend', resetJoystick);
         joystickBase.addEventListener('touchcancel', resetJoystick);
 
-        const actionBtn = document.getElementById('action-btn');
-        actionBtn.addEventListener('touchstart', (e) => {
+        document.getElementById('action-btn').addEventListener('touchstart', (e) => {
             e.preventDefault();
             const px = camera.position.x;
             const pz = camera.position.z;
 
+            // Máy tính
             if (Math.abs(px - (-8)) < 2.5 && Math.abs(pz - (-8)) < 2.5) {
-                if (money >= 20) {
-                    if (carriedGoods < 3) {
-                        money -= 20;
-                        carriedGoods++;
-                        document.getElementById('money').innerText = money;
-                        document.getElementById('carried-goods').innerText = carriedGoods;
-                        showMsg("📦 Đã nhập 1 thùng hàng từ máy tính! (-20$)");
-                    } else {
-                        showMsg("⚠️ Tay bạn đã đầy thùng hàng (Tối đa 3)!");
-                    }
+                if (money >= 20 && carriedGoods < 3) {
+                    money -= 20;
+                    carriedGoods++;
+                    document.getElementById('money').innerText = money;
+                    document.getElementById('carried-goods').innerText = carriedGoods;
+                    showMsg("📦 Đã nhập 1 thùng hàng! (-20$)");
                 } else {
-                    showMsg("❌ Không đủ tiền nhập hàng! Cần ít nhất 20$");
+                    showMsg("⚠️ Không đủ tiền hoặc đầy tay!");
                 }
                 return;
             }
 
+            // Thu ngân
             if (Math.abs(px - 5) < 3 && Math.abs(pz - 2) < 3) {
                 if (customerState === 'waiting') {
                     customerState = 'leaving';
                     money += 50;
                     document.getElementById('money').innerText = money;
-                    showMsg("💵 Đã tính tiền cho khách thành công! +50$");
-                } else if (customerState === 'walking_in') {
-                    showMsg("⏳ Khách đang đi từ cửa vào quầy, chờ chút ông chủ!");
-                } else {
-                    showMsg("ℹ️ Khách đang rời đi, chờ khách mới tới nhé.");
+                    showMsg("💵 Khách đã thanh toán! +50$");
                 }
                 return;
             }
 
-            let interactedShelf = false;
+            // Kệ hàng
             shelves.forEach(shelf => {
-                if (Math.abs(px - shelf.x) < 2.2 && Math.abs(pz - shelf.z) < 2.2) {
-                    interactedShelf = true;
-                    if (!shelf.hasGoods) {
-                        if (carriedGoods > 0) {
-                            carriedGoods--;
-                            shelf.hasGoods = true;
-                            shelf.group.traverse((child) => {
-                                if (child.isMesh && child.geometry.type === 'BoxGeometry' && child.scale.x === 1) {
-                                    child.material = new THREE.MeshBasicMaterial({ color: 0x4caf50 });
-                                }
-                            });
-                            document.getElementById('carried-goods').innerText = carriedGoods;
-                            
-                            const currentEmpty = shelves.filter(s => !s.hasGoods).length;
-                            document.getElementById('empty-shelves').innerText = currentEmpty;
-                            showMsg("🛒 Đã bầy hàng lên kệ thành công!");
-                        } else {
-                            showMsg("⚠️ Bạn đang cầm 0 thùng hàng! Hãy ra máy tính nhập hàng.");
-                        }
-                    } else {
-                        showMsg("✅ Kệ hàng này đã được bầy đầy rồi!");
-                    }
+                if (Math.abs(px - shelf.x) < 2.2 && Math.abs(pz - shelf.z) < 2.2 && !shelf.hasGoods && carriedGoods > 0) {
+                    carriedGoods--;
+                    shelf.hasGoods = true;
+                    shelf.group.traverse(child => {
+                        if (child.isMesh && child.scale.x === 1) child.material = new THREE.MeshBasicMaterial({ color: 0x4caf50 });
+                    });
+                    document.getElementById('carried-goods').innerText = carriedGoods;
+                    document.getElementById('empty-shelves').innerText = shelves.filter(s => !s.hasGoods).length;
+                    showMsg("🛒 Đã bầy hàng lên kệ!");
                 }
             });
-
-            if (!interactedShelf && Math.abs(px - (-8)) >= 2.5 && Math.abs(pz - (-8)) >= 2.5 && Math.abs(px - 5) >= 3) {
-                showMsg("🚶 Hãy đến gần Máy tính, Quầy thu ngân hoặc Kệ hàng để tương tác!");
-            }
         });
 
         const speed = 0.08;
@@ -499,4 +421,36 @@
             requestAnimationFrame(animate);
 
             camera.rotation.order = 'YXZ';
-            
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+
+            if (customerState === 'walking_in') {
+                customerGroup.position.z -= 0.03;
+                if (customerGroup.position.z <= customerTargetZ) {
+                    customerGroup.position.z = customerTargetZ;
+                    customerState = 'waiting';
+                    showMsg("🚨 Có khách đang chờ thanh toán!");
+                }
+            } else if (customerState === 'leaving') {
+                customerGroup.position.z += 0.04;
+                if (customerGroup.position.z > 13) {
+                    customerGroup.position.set(5, 0, 12);
+                    customerState = 'walking_in';
+                }
+            }
+
+            if (moveVector.x !== 0 || moveVector.z !== 0) {
+                const moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.z);
+                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+                const nextX = camera.position.x + moveDir.x * speed;
+                const nextZ = camera.position.z + moveDir.z * speed;
+                if (!checkCollision(nextX, camera.position.z)) camera.position.x = nextX;
+                if (!checkCollision(camera.position.x, nextZ)) camera.position.z = nextZ;
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
