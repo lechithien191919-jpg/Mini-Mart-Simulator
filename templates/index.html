@@ -196,12 +196,6 @@
         doorGlass.position.set(0, 1.5, 11);
         scene.add(doorGlass);
 
-        const obstacles = [
-            { x: 0, z: -10.75, width: 22, depth: 0.5 },
-            { x: -10.75, z: 0, width: 0.5, depth: 22 },
-            { x: 10.75, z: 0, width: 0.5, depth: 22 }
-        ];
-
         // 3 Kệ hàng
         const shelves = [];
         const shelfMat = new THREE.MeshBasicMaterial({ color: 0x795548 });
@@ -254,7 +248,7 @@
         const cHead = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffccbc }));
         cHead.position.set(0, 1.3, 0);
         customerGroup.add(cHead);
-        customerGroup.position.set(5, 0, 12);
+        customerGroup.position.set(0, 0, 12); // Bắt đầu từ cửa chính (ảnh 2)
         scene.add(customerGroup);
 
         let money = 150;
@@ -275,28 +269,50 @@
             setTimeout(() => { m.style.opacity = '0'; }, 2000);
         }
 
-        let isDragging = false;
+        // Tối ưu hóa điều khiển xoay màn hình mượt mà mọi nơi
+        let lookTouchId = null;
         let prevX = 0, prevY = 0;
+
         window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#action-btn') || e.target.closest('#joystick-base') || e.target.closest('#ui')) return;
-            isDragging = true;
-            prevX = e.touches[0].clientX;
-            prevY = e.touches[0].clientY;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                // Nếu không bấm vào nút joystick hay action thì nhận diện là vuốt nhìn quanh
+                if (!t.target.closest('#action-btn') && !t.target.closest('#joystick-base') && !t.target.closest('#ui')) {
+                    if (lookTouchId === null) {
+                        lookTouchId = t.identifier;
+                        prevX = t.clientX;
+                        prevY = t.clientY;
+                    }
+                }
+            }
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            let dx = e.touches[0].clientX - prevX;
-            let dy = e.touches[0].clientY - prevY;
-            yaw -= dx * 0.004;
-            pitch -= dy * 0.004;
-            if (pitch > 1.4) pitch = 1.4;
-            if (pitch < -1.4) pitch = -1.4;
-            prevX = e.touches[0].clientX;
-            prevY = e.touches[0].clientY;
+            if (lookTouchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.identifier === lookTouchId) {
+                    let dx = t.clientX - prevX;
+                    let dy = t.clientY - prevY;
+                    yaw -= dx * 0.004;
+                    pitch -= dy * 0.004;
+                    if (pitch > 1.4) pitch = 1.4;
+                    if (pitch < -1.4) pitch = -1.4;
+                    prevX = t.clientX;
+                    prevY = t.clientY;
+                }
+            }
         }, { passive: true });
-        window.addEventListener('touchend', () => { isDragging = false; });
 
+        window.addEventListener('touchend', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === lookTouchId) {
+                    lookTouchId = null;
+                }
+            }
+        });
+
+        // Joystick điều khiển di chuyển
         const joystickBase = document.getElementById('joystick-base');
         const joystickKnob = document.getElementById('joystick-knob');
         let moveVector = { x: 0, z: 0 };
@@ -369,7 +385,6 @@
                     carriedGoods--;
                     shelf.hasGoods = true;
                     
-                    // Tạo các sản phẩm minh họa đẹp mắt lên kệ (Rau xanh, Thịt đỏ, Chai nước)
                     const itemColors = [0x4caf50, 0xf44336, 0x03a9f4];
                     [0.4, 1.2, 2.0].forEach((yP, idx) => {
                         const product = new THREE.Mesh(
@@ -395,22 +410,22 @@
             camera.rotation.y = yaw;
             camera.rotation.x = pitch;
 
-            // Logic di chuyển và lựa hàng của khách hàng
+            // Logic khách hàng đi từ cửa vào trong kệ lựa hàng rồi mới ra quầy
             if (customerState === 'walking_in') {
                 customerGroup.position.z -= 0.03;
-                if (customerGroup.position.z <= 0) {
+                if (customerGroup.position.z <= -4) { // Đi hẳn vào khu vực giữa các kệ hàng
                     customerState = 'browsing';
                     browseTimer = 0;
-                    showMsg("🛍️ Khách đang lựa chọn hàng hóa...");
+                    showMsg("🛍️ Khách đang đi lựa chọn hàng hóa...");
                 }
             } else if (customerState === 'browsing') {
-                browseTimer += 1; // đếm khung hình (~60 khung hình = 1 giây)
-                if (browseTimer > 600) { // ~10 giây lựa hàng
+                browseTimer += 1;
+                if (browseTimer > 600) { // Lựa hàng trong vòng 10 giây
                     customerState = 'going_to_counter';
                 }
             } else if (customerState === 'going_to_counter') {
-                customerGroup.position.z -= 0.03;
-                if (customerGroup.position.z <= 4.5) {
+                customerGroup.position.z += 0.03;
+                if (customerGroup.position.z >= 4.5) {
                     customerGroup.position.z = 4.5;
                     customerState = 'waiting';
                     showMsg("🚨 Có khách đang chờ thanh toán tại quầy!");
@@ -418,7 +433,7 @@
             } else if (customerState === 'leaving') {
                 customerGroup.position.z += 0.04;
                 if (customerGroup.position.z > 13) {
-                    customerGroup.position.set(5, 0, 12);
+                    customerGroup.position.set(0, 0, 12); // Reset về vị trí cửa chính
                     customerState = 'walking_in';
                 }
             }
