@@ -159,36 +159,28 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Ánh sáng
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
         scene.add(ambientLight);
 
         // Sàn nhà
-        const floorGeo = new THREE.PlaneGeometry(22, 22);
-        const floorMat = new THREE.MeshBasicMaterial({ color: 0xecf0f1 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(22, 22), new THREE.MeshBasicMaterial({ color: 0xecf0f1 }));
         floor.rotation.x = -Math.PI / 2;
         scene.add(floor);
 
-        // Tường xung quanh siêu thị
+        // Tường xung quanh
         const wallMat = new THREE.MeshBasicMaterial({ color: 0xffecb3 });
-        
-        // Tường sau
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(22, 5, 0.5), wallMat);
         backWall.position.set(0, 2.5, -11);
         scene.add(backWall);
 
-        // Tường trái
         const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 22), wallMat);
         leftWall.position.set(-11, 2.5, 0);
         scene.add(leftWall);
 
-        // Tường phải
         const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 22), wallMat);
         rightWall.position.set(11, 2.5, 0);
         scene.add(rightWall);
 
-        // Tường trước (có cửa kính)
         const frontLeft = new THREE.Mesh(new THREE.BoxGeometry(9, 5, 0.5), wallMat);
         frontLeft.position.set(-6.5, 2.5, 11);
         scene.add(frontLeft);
@@ -197,11 +189,6 @@
         frontRight.position.set(6.5, 2.5, 11);
         scene.add(frontRight);
 
-        const frontTop = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.5), wallMat);
-        frontTop.position.set(0, 4, 11);
-        scene.add(frontTop);
-
-        // Cửa kính
         const doorGlass = new THREE.Mesh(
             new THREE.BoxGeometry(3.8, 3, 0.1), 
             new THREE.MeshBasicMaterial({ color: 0x81d4fa, transparent: true, opacity: 0.5 })
@@ -209,16 +196,10 @@
         doorGlass.position.set(0, 1.5, 11);
         scene.add(doorGlass);
 
-        // Danh sách va chạm
         const obstacles = [
             { x: 0, z: -10.75, width: 22, depth: 0.5 },
             { x: -10.75, z: 0, width: 0.5, depth: 22 },
-            { x: 10.75, z: 0, width: 0.5, depth: 22 },
-            { x: -5, z: -7, width: 3.4, depth: 1.2 },
-            { x: 0, z: -7, width: 3.4, depth: 1.2 },
-            { x: 5, z: -7, width: 3.4, depth: 1.2 },
-            { x: -8, z: -8, width: 2.7, depth: 1.5 },
-            { x: 5, z: 2, width: 4.0, depth: 2.0 }
+            { x: 10.75, z: 0, width: 0.5, depth: 22 }
         ];
 
         // 3 Kệ hàng
@@ -248,19 +229,14 @@
             shelves.push({ id: index + 1, group: shelfGroup, hasGoods: false, x: xPos, z: -7 });
         });
 
-        // Bàn máy tính
+        // Bàn máy tính nhập hàng
         const desk = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.0, 1.3), new THREE.MeshBasicMaterial({ color: 0x37474f }));
         desk.position.set(-8, 0.5, -8);
         scene.add(desk);
 
-        const pcCase = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.7, 0.7), new THREE.MeshBasicMaterial({ color: 0x212121 }));
-        pcCase.position.set(-8.8, 0.35, -8);
-        scene.add(pcCase);
-
         const pcScreen = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.08), new THREE.MeshBasicMaterial({ color: 0x111111 }));
         pcScreen.position.set(-8, 1.35, -8);
         scene.add(pcScreen);
-
         const pcDisplay = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.02), new THREE.MeshBasicMaterial({ color: 0x00e5ff }));
         pcDisplay.position.set(-8, 1.35, -7.95);
         scene.add(pcDisplay);
@@ -272,23 +248,22 @@
 
         // Khách hàng
         const customerGroup = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.1, 8), new THREE.MeshBasicMaterial({ color: 0xe91e63 }));
-        body.position.set(0, 0.55, 0);
-        customerGroup.add(body);
-        
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffccbc }));
-        head.position.set(0, 1.3, 0);
-        customerGroup.add(head);
-
+        const cBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.1, 8), new THREE.MeshBasicMaterial({ color: 0xe91e63 }));
+        cBody.position.set(0, 0.55, 0);
+        customerGroup.add(cBody);
+        const cHead = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffccbc }));
+        cHead.position.set(0, 1.3, 0);
+        customerGroup.add(cHead);
         customerGroup.position.set(5, 0, 12);
         scene.add(customerGroup);
 
         let money = 150;
         let carriedGoods = 0;
+        
+        // Trạng thái khách hàng: walking_in -> browsing (10s) -> going_to_counter -> waiting -> leaving
         let customerState = 'walking_in';
-        let customerTargetZ = 4.5;
+        let browseTimer = 0;
 
-        // Đặt vị trí camera an toàn trong nhà
         camera.position.set(0, 1.6, -2);
         let yaw = 0;
         let pitch = 0;
@@ -298,18 +273,6 @@
             m.innerText = txt;
             m.style.opacity = '1';
             setTimeout(() => { m.style.opacity = '0'; }, 2000);
-        }
-
-        const playerRadius = 0.4;
-        function checkCollision(newX, newZ) {
-            for (let i = 0; i < obstacles.length; i++) {
-                const obs = obstacles[i];
-                if (newX >= obs.x - obs.width/2 - playerRadius && newX <= obs.x + obs.width/2 + playerRadius &&
-                    newZ >= obs.z - obs.depth/2 - playerRadius && newZ <= obs.z + obs.depth/2 + playerRadius) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         let isDragging = false;
@@ -332,7 +295,6 @@
             prevX = e.touches[0].clientX;
             prevY = e.touches[0].clientY;
         }, { passive: true });
-
         window.addEventListener('touchend', () => { isDragging = false; });
 
         const joystickBase = document.getElementById('joystick-base');
@@ -376,42 +338,51 @@
             const px = camera.position.x;
             const pz = camera.position.z;
 
-            // Máy tính
+            // Nhập hàng tại máy tính
             if (Math.abs(px - (-8)) < 2.5 && Math.abs(pz - (-8)) < 2.5) {
                 if (money >= 20 && carriedGoods < 3) {
                     money -= 20;
                     carriedGoods++;
                     document.getElementById('money').innerText = money;
                     document.getElementById('carried-goods').innerText = carriedGoods;
-                    showMsg("📦 Đã nhập 1 thùng hàng! (-20$)");
+                    showMsg("📦 Đã nhập thùng hàng (Rau/Thịt/Nước)!");
                 } else {
                     showMsg("⚠️ Không đủ tiền hoặc đầy tay!");
                 }
                 return;
             }
 
-            // Thu ngân
+            // Thanh toán tại quầy
             if (Math.abs(px - 5) < 3 && Math.abs(pz - 2) < 3) {
                 if (customerState === 'waiting') {
                     customerState = 'leaving';
                     money += 50;
                     document.getElementById('money').innerText = money;
-                    showMsg("💵 Khách đã thanh toán! +50$");
+                    showMsg("💵 Khách đã thanh toán xong! +50$");
                 }
                 return;
             }
 
-            // Kệ hàng
+            // Bầy hàng lên kệ
             shelves.forEach(shelf => {
                 if (Math.abs(px - shelf.x) < 2.2 && Math.abs(pz - shelf.z) < 2.2 && !shelf.hasGoods && carriedGoods > 0) {
                     carriedGoods--;
                     shelf.hasGoods = true;
-                    shelf.group.traverse(child => {
-                        if (child.isMesh && child.scale.x === 1) child.material = new THREE.MeshBasicMaterial({ color: 0x4caf50 });
+                    
+                    // Tạo các sản phẩm minh họa đẹp mắt lên kệ (Rau xanh, Thịt đỏ, Chai nước)
+                    const itemColors = [0x4caf50, 0xf44336, 0x03a9f4];
+                    [0.4, 1.2, 2.0].forEach((yP, idx) => {
+                        const product = new THREE.Mesh(
+                            new THREE.BoxGeometry(0.5, 0.4, 0.6), 
+                            new THREE.MeshBasicMaterial({ color: itemColors[idx] })
+                        );
+                        product.position.set((Math.random() - 0.5) * 1.5, yP, (Math.random() - 0.5) * 0.4);
+                        shelf.group.add(product);
                     });
+
                     document.getElementById('carried-goods').innerText = carriedGoods;
                     document.getElementById('empty-shelves').innerText = shelves.filter(s => !s.hasGoods).length;
-                    showMsg("🛒 Đã bầy hàng lên kệ!");
+                    showMsg("🛒 Đã bầy hàng lên kệ đầy đủ!");
                 }
             });
         });
@@ -424,12 +395,25 @@
             camera.rotation.y = yaw;
             camera.rotation.x = pitch;
 
+            // Logic di chuyển và lựa hàng của khách hàng
             if (customerState === 'walking_in') {
                 customerGroup.position.z -= 0.03;
-                if (customerGroup.position.z <= customerTargetZ) {
-                    customerGroup.position.z = customerTargetZ;
+                if (customerGroup.position.z <= 0) {
+                    customerState = 'browsing';
+                    browseTimer = 0;
+                    showMsg("🛍️ Khách đang lựa chọn hàng hóa...");
+                }
+            } else if (customerState === 'browsing') {
+                browseTimer += 1; // đếm khung hình (~60 khung hình = 1 giây)
+                if (browseTimer > 600) { // ~10 giây lựa hàng
+                    customerState = 'going_to_counter';
+                }
+            } else if (customerState === 'going_to_counter') {
+                customerGroup.position.z -= 0.03;
+                if (customerGroup.position.z <= 4.5) {
+                    customerGroup.position.z = 4.5;
                     customerState = 'waiting';
-                    showMsg("🚨 Có khách đang chờ thanh toán!");
+                    showMsg("🚨 Có khách đang chờ thanh toán tại quầy!");
                 }
             } else if (customerState === 'leaving') {
                 customerGroup.position.z += 0.04;
@@ -442,10 +426,8 @@
             if (moveVector.x !== 0 || moveVector.z !== 0) {
                 const moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.z);
                 moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
-                const nextX = camera.position.x + moveDir.x * speed;
-                const nextZ = camera.position.z + moveDir.z * speed;
-                if (!checkCollision(nextX, camera.position.z)) camera.position.x = nextX;
-                if (!checkCollision(camera.position.x, nextZ)) camera.position.z = nextZ;
+                camera.position.x += moveDir.x * speed;
+                camera.position.z += moveDir.z * speed;
             }
 
             renderer.render(scene, camera);
@@ -454,3 +436,4 @@
     </script>
 </body>
 </html>
+
